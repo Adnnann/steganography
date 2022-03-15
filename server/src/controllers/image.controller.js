@@ -1,88 +1,187 @@
 import Image from '../models/image.model'
 import _ from 'lodash'
 import errorHandler from '../helpers/dbErrorHandler'
+import fs from 'file-system'
+import fsExtra from 'fs-extra'
+import { embed, digUp } from '@mykeels/steganography'
 
-// works as intended
 const create = (req, res, next) => {
 
-    const fileSizeLimit = 1024 * 10
-    
+
+    const fileSizeLimit = 1024 * 1024 * 10
+
+    if(!req.file){
+        return res.send({error:'You forgot to upload file'})
+    }
+   
     const image = new Image({
         encryptedImage: req.file.filename,
-        fileUrl: 'http://localhost:5000/' + req.file.destination + req.file.filename + '.' + req.file.mimetype.split('/')[1]
+        imageUrl: `http://localhost:5000/output/${req.file.originalname}`
         
     })
-   
-    if(req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/png'){
-       
-        return res.status(400).json({Error:'File needs to be jpg or png'})
-
-    }else if(req.file.size > fileSizeLimit){
-
-        return res.status(400).json({Error:'Allowed size of image is 10MB'})
-
+      
+    if(req.file.size > fileSizeLimit){
+        //REMOVE IF FROM FOLDER IF FILE SIZE IS HIGHER THAN TRESHOLD
+        fs.fs.unlinkSync(`./${req.file.path}`)
+        return res.send({Error:'Allowed size of image is 10MB'})
     }else{
+    if(req.file.mimetype.includes('image/jpeg')
+    || req.file.mimetype.includes('image/png')
+    || req.file.mimetype.includes('text/plain')){
         image.save((err, result) => {
             if(err) {
-                return res.status(400).json({error: errorHandler.getErrorMessage(err)})
+                return res.send({error: errorHandler.getErrorMessage(err)})
             }
-            res.status(200).json({message: 'Image uploaded successfully.'})
+            res.send({message: 
+                req.file.mimetype.includes('text/plain') 
+                ? 'Message uploaded successfuly' 
+                : 'Cover image uploaded successfuly'})
         })
+    }else{
+        //REMOVE IF FROM FOLDER IF ANY OTHER EXTENSION IS SENT TO SERVER
+        fs.fs.unlinkSync(`./${req.file.path}`)
+        return res.send({Error:'Format of the file must be PNG|JPEG|JPG|TXT'})
     }
+
+    }
+
         
+}
+
+const encryptImage = (req, res, next) => {
+    
+    const image = './output/coverImage.jpeg'
+    const message = './output/message.txt'
+  
+    if(!fs.fs.existsSync('./output/coverImage.jpeg') && !fs.fs.existsSync('./output/coverImage.png') && !fs.fs.existsSync('./output/coverImage.jpg')){
+        return res.send({error:'Please upload image to enable embeding'})
+     }else if(!fs.fs.existsSync(message)){
+        return res.send({error:'Please upload message to enable embeding'})
+     }else{(async () => {
+    
+
+            if(fs.fs.existsSync('./output/coverImage.jpeg')){
+                const buffer = await embed(
+                    './output/coverImage.jpeg', 
+                    fs.fs.readFileSync('./output/message.txt', 
+                    {encoding:'utf-8', flag:'r'})
+                    
+                    )
+            
+                    fs.fs.writeFileSync(
+                        './output/stegoImage.jpg',
+                        buffer
+                    );
+                return res.send({message:'Stego image created successfully'})     
+            }else if(fs.fs.existsSync('./output/coverImage.png')){
+                const buffer = await embed(
+                    './output/coverImage.png', 
+                    fs.fs.readFileSync('./output/message.txt', 
+                    {encoding:'utf-8', flag:'r'})
+                    
+                    )
+            
+                    fs.fs.writeFileSync(
+                        './output/stegoImage.jpg',
+                        buffer
+                    );
+                return res.send({message:'Stego image created successfully'})     
+            }else{
+                const buffer = await embed(
+                    './output/coverImage.jpg', 
+                    fs.fs.readFileSync('./output/message.txt', 
+                    {encoding:'utf-8', flag:'r'})
+                    
+                    )
+            
+                    fs.fs.writeFileSync(
+                        './output/stegoImage.jpg',
+                        buffer
+                    );
+                return res.send({message:'Stego image created successfully'})     
+            }
+    
+           
+            }    
+        )()
+    
+    }  
     
 }
-const list = (req, res) => {
-    Image.find((err, users) => {
-        if(err) {
-            return res.status(400).json({error: errorHandler.getErrorMessage(err)})
+
+const getMessageFromStegoImage = (req, res, next) => {
+
+    if(!fs.fs.existsSync('./output/stegoImage.jpg') && !fs.fs.existsSync('./output/stegoImage.png')){
+        return res.send({error:'Please upload image to extract message'})
+     }else{
+        (async() => {
+        if(fs.fs.existsSync('./output/stegoImage.jpg')){
+           const text = await digUp(
+             './output/stegoImage.jpg'
+            ).catch(err=>{
+                //control error in case extracing message is not possible
+                if(err){
+                    return res.send({error:'Unable to extract message'})
+                }else{
+                 fs.fs.writeFileSync(
+                     './output/extractedMessage.txt',
+                      text
+                 );
+                 res.send({message:'Message extracted successfully. You can download it now.'})
+                }
+            })
+            if(typeof text === 'string'){
+                fs.fs.writeFileSync(
+                    './output/extractedMessage.txt',
+                     text
+                );
+                res.send({message:'Message extracted successfully. You can download it now.'})
+            }
+        }else{
+            const text = await digUp(
+                './output/stegoImage.png'
+               ).catch(err=>{
+                   //REPORT ERROR IF EXTRACTING MESSAGE IS NOTE POSSIBLE
+                   if(err){
+                       return res.send({error:'Unable to extract message'})
+                   }else{
+                    fs.fs.writeFileSync(
+                        './output/extractedMessage.txt',
+                         text
+                    );
+                    res.send({message:'Message extracted successfully. You can download it now.'})
+                   }
+               })
+               if(typeof text === 'string'){
+                fs.fs.writeFileSync(
+                    './output/extractedMessage.txt',
+                     text
+                );
+                res.send({message:'Message extracted successfully. You can download it now.'})
+               }
+               
+            }
+            
         }
-        res.status(200).json(users)
-    }).select('_id encryptedImage fileUrl updated created')
+       
+        )()         
+     }    
 }
-const userByID = (req, res, next, id) => {
-    User.findById(id).exec((err, user) => {
-        if(err || !user){
-            return res.status(404).json({error:'User not found!'})
-        }
-    req.profile = user;
-    next()
-    })
+
+const removeFiles = (req, res) => {
+
+ let dir = './output'
+ try {
+    fsExtra.emptyDirSync(dir)
+    res.send({message:'Output folder cleaned'})
+  }catch(err){
+    res.send({error:'Error while trying to clean folder'})
+  }
 }
-const read = (req, res) => {
-    req.profile.hashed_password = undefined
-    req.profile.salt = undefined
-    res.status(200).json(req.profile)
-}
-const update = (req, res, next) => {
-    let user = req.profile
-    user = _.extend(user, req.body);
-    user.updated = Date.now()
-    user.save(err=>{
-        if(err){
-            return res.status(400).json({error: errorHandler.getErrorMessage()})
-        }
-        user.hashed_password = undefined
-        user.salt = undefined
-        res.status(200).json(user)
-    })
-}
-const remove = (req, res, next) => {
-    let user = req.profile
-    user.remove((err, deletedUser)=>{
-        if(err){
-            return res.status(400).json({error: errorHandler.getErrorMessage()})
-        }
-        deletedUser.hashed_password = undefined
-        deletedUser.salt = undefined
-        res.status(200).json(deletedUser)
-    })
-}
+
 export default {
     create,
-    list,
-    userByID,
-    read,
-    update,
-    remove
+    encryptImage,
+    getMessageFromStegoImage,
+    removeFiles
 }

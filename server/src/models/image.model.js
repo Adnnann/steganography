@@ -17,7 +17,7 @@ const ImageSchema = new mongoose.Schema({
         default: Date.now
     },
     updated: Date,
-    hashed_message: {
+    message: {
         type: String,
     },
     salt: String,
