@@ -16,7 +16,6 @@ import ImagePlaceholder from '../assets/images/imagePlaceholder.png'
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 const EmbedImage = () => {
 
 const [files, setFiles] = useState({
@@ -62,46 +61,43 @@ const uploadMessage = () => {
 }
 
 const download = () => {
-    if(files.coverImage !== '' && files.message !== ''){
+    if(files.coverImage !== '' && files.message !== '' && embedImageStatus.hasOwnProperty('message')){
         dispatch(downloadImage())
         setFiles({...files, error:''})
     }else{
         setFiles({...files, error:'You have to upload both message and cover image!'})
-    }
-    
+    }   
 }
 
 const handleChange = name => event =>{
-
-    console.log(event.target.files[0].type)
-
+    //create file for uploading
     let formData = new FormData()
     formData.append('encryptedImage',  event.target.files[0])
 
+    //check if upload image is of the type jpeg, jpg, png
     if(name === 'coverImage' 
     && (
         event.target.files[0].type === 'image/jpeg'
     || event.target.files[0].type === 'image/jpg'
     || event.target.files[0].type === 'image/png')){
-        setFiles({...files, 
-            coverImageValue:event.target.value,
-            coverImage:formData,
+        setFiles({...files,
+            changeImage:false, 
+            coverImageValue: event.target.value,
+            coverImage: formData,
             error:''
         })
+    //check if uploaded message is of type .txt
     }else if(name === 'message' && event.target.files[0].type === 'text/plain'){
         setFiles({...files, 
             coverImageValue:event.target.value,
             message:formData,
             error:''
         })
+    //create errors
     }else{
         setFiles({...files, 
-            error: 'Please upload png or jpg format for cover image or txt for message'})
-    }
-
-   
-  
-    
+            error: 'Please upload png, jpg or jpeg format for cover image or txt for message'})
+    }    
 }
 
 
@@ -218,10 +214,14 @@ return(
     
     <Grid container item xs={12} md={4} lg={4} xl={4} justifyContent='center' style={{marginTop:"20px"}}>
     <Card
-    style={{width:'50%'}}>
+    style={{width:'250px', height:'250px'}}>
         <CardMedia 
         component={'img'}
-        src={ImagePlaceholder}>
+        src={
+            //display uploaded user cover image
+            uploadFilesStatus.hasOwnProperty('imageUrl') ?
+             uploadFilesStatus.imageUrl
+            : ImagePlaceholder }>
 
         </CardMedia>
     </Card>

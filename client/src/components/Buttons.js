@@ -30,9 +30,23 @@ const Buttons = () => {
                     style={{ borderRadius: '0', borderBottomWidth: '0px', marginBottom:"40px" }}
                 >
                     <Button onClick={()=>navigate('/')}
-                    style={{ border: 'solid', borderBottomStyle:'none', fontSize: "24px", borderColor: "black", minWidth: '160px', textTransform:"none" }} key="two"><Lock /> Embed</Button>
+                    style={{ 
+                        backgroundColor: window.location.pathname === '/' ? 'grey' :'white',
+                        border: 'solid', 
+                        borderBottomStyle:'none', 
+                        fontSize: "24px", 
+                        borderColor: "black", 
+                        minWidth: '160px', 
+                        textTransform:"none" }} key="two"><Lock /> Embed</Button>
                     <Button onClick={()=>extract()}
-                    style={{ border: 'solid', borderBottomStyle:'none', minWidth: '160px', fontSize: "24px", borderColor: "black", borderLeftStyle: 'none', textTransform:"none" }} key="three"><LockOpen /> Extract</Button>
+                    style={{ 
+                        backgroundColor: window.location.pathname === '/stego' ? 'grey' :'white',
+                        border: 'solid', 
+                        borderBottomStyle:'none', 
+                        minWidth: '160px', 
+                        fontSize: "24px", 
+                        borderColor: "black", 
+                        borderLeftStyle: 'none', textTransform:"none" }} key="three"><LockOpen /> Extract</Button>
                 </ButtonGroup>
 
             </Box>

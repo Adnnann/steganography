@@ -30,6 +30,7 @@ const uploadImageStatus = useSelector(getStegoImage)
 
 const [files, setFiles] = useState({
     stegoImage:'',
+    fileExt:'',
     error:''
 })
 
@@ -48,11 +49,13 @@ const handleChange = name => event =>{
     || event.target.files[0].type === 'image/jpg'
     || event.target.files[0].type === 'image/png'){
 
-        setFiles({...files, [name]:event.target.files[0]})
+        setFiles({...files, 
+            [name]:event.target.files[0],
+            error:''})
 
     }else{
 
-        setFiles({...files, error:'You must upload image to be able to extract message'})  
+        setFiles({...files, error:'You must upload image in jpg, jpeg or png format'})  
     }
 }
 
@@ -166,10 +169,11 @@ return(
 
     
     <Grid container item xs={12} md={4} lg={4} xl={4} justifyContent='center' style={{marginTop:"20px"}}>
-    <Card style={{width:'50%'}}>
+    <Card style={{width:'250px', height:'250px'}}>
         <CardMedia 
         component={'img'}
-        src={uploadImageStatus.hasOwnProperty('message') ? 'http://localhost:5000/output/stegoImage.jpg'
+        src={uploadImageStatus.hasOwnProperty('imageUrl') ? 
+        uploadImageStatus.imageUrl
         : ImagePlaceholder}>
 
         </CardMedia>

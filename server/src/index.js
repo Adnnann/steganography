@@ -3,7 +3,10 @@ import app from "./app";
 import mongoose from 'mongoose'
 
 
-
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next()
+  })
 app.listen(config.port, err=>{
     if(err) return console.log(err)
     console.log(`Server started on port ${config.port}`)

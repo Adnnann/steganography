@@ -1,7 +1,6 @@
 import express from "express";
 import imageCtrl from '../controllers/image.controller'
 import multer from "multer";
-import fsExtra from 'fs-extra'
 
 const storageCoverImage = multer.diskStorage({
     destination: (req, file, callback) => {
@@ -42,6 +41,7 @@ router.route('/')
 .get(imageCtrl.encryptImage)
 .post(uploadCoverImage.single('encryptedImage'), imageCtrl.create)
 .delete(imageCtrl.removeFiles)
+
 router.route('/downloadImage')
 .get((req, res)=>{
         res.download('./output/stegoImage.jpg', (err)=>{

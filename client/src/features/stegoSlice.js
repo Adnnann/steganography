@@ -4,7 +4,11 @@ import fileDownload from 'js-file-download'
 
 
 export const uploadFiles = createAsyncThunk('stego/uploadFiles', async(file)=>{
-   return await axios.post('http://localhost:5000/', file)
+   return await axios.post('http://localhost:5000/', file,{
+       headers:{
+        'Cache-Control': 'no-store'
+       }
+   })
     .then(response=>response.data)
     .catch(error=>error)
 })
