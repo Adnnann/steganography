@@ -51,7 +51,8 @@ const create = (req, res, next) => {
             //filter out stego and cover images to avoid errors
                 const dir = fs.fs.readdirSync('./output').filter(item=>!item.includes('cover') 
                 && !item.includes('stego')
-                && !item.includes('message'))
+                && !item.includes('message')
+                && !item.includes('extracted'))
                 .reduce(function (a, b){ return a > b ? a : b; })
 
             res.send({message: 
